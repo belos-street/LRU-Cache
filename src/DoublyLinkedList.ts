@@ -1,98 +1,28 @@
 // 链表节点类
-export class DoublyLinkedListNode<K, V> {
-  key: K;
-  value: V;
-  prev: DoublyLinkedListNode<K, V> | null;
-  next: DoublyLinkedListNode<K, V> | null;
+export class DoublyLinkedListNode<T> {
+  value: T;
+  prev: DoublyLinkedListNode<T> | null;
+  next: DoublyLinkedListNode<T> | null;
 
-  constructor(
-    key: K,
-    value: V,
-    prev: DoublyLinkedListNode<K, V> | null = null,
-    next: DoublyLinkedListNode<K, V> | null = null
-  ) {
+  constructor(value: T) {
     this.value = value;
-    this.prev = prev;
-    this.next = next;
-    this.key = key;
+    this.prev = null;
+    this.next = null;
   }
 }
 
 // 双向链表类
-export class DoublyLinkedList<K, V> {
-  head: DoublyLinkedListNode<K, V> | null;
-  tail: DoublyLinkedListNode<K, V> | null;
+export class DoublyLinkedList<T> {
+  head: DoublyLinkedListNode<T> | null;
+  tail: DoublyLinkedListNode<T> | null;
 
   constructor() {
     this.head = null;
     this.tail = null;
   }
 
-  // 插入节点到头部
-  insertAtHead(key: K, value: V) {
-    const newNode = new DoublyLinkedListNode<K, V>(key, value);
-
-    if (!this.head && !this.tail) {
-      this.head = newNode;
-      this.tail = newNode;
-    } else {
-      newNode.next = this.head;
-      this.head!.prev = newNode;
-      this.head = newNode;
-    }
-  }
-
-  // 插入节点到尾部
-  insertAtTail(key: K, value: V) {
-    const newNode = new DoublyLinkedListNode<K, V>(key, value);
-
-    if (!this.head && !this.tail) {
-      this.head = newNode;
-      this.tail = newNode;
-    } else {
-      newNode.prev = this.tail;
-      this.tail!.next = newNode;
-      this.tail = newNode;
-    }
-  }
-
-  // 删除节点
-  deleteNode(nodeToRemove: DoublyLinkedListNode<K, V>) {
-    if (!nodeToRemove.prev && !nodeToRemove.next) {
-      // 处理只有一个节点的情况
-      this.head = null;
-      this.tail = null;
-    } else if (!nodeToRemove.prev) {
-      // 处理删除头节点的情况
-      this.head = nodeToRemove.next;
-      this.head!.prev = null;
-    } else if (!nodeToRemove.next) {
-      // 处理删除尾节点的情况
-      this.tail = nodeToRemove.prev;
-      this.tail.next = null;
-    } else {
-      // 处理中间节点的情况
-      nodeToRemove.prev.next = nodeToRemove.next;
-      nodeToRemove.next.prev = nodeToRemove.prev;
-    }
-  }
-
-  // 根据key查找节点
-  findToKey(key: K): DoublyLinkedListNode<K, V> | null {
-    let currentNode = this.head;
-
-    while (currentNode) {
-      if (currentNode.key === key) {
-        return currentNode;
-      }
-      currentNode = currentNode.next;
-    }
-
-    return null;
-  }
-
-  // 根据value查找节点
-  findToValue(value: V): DoublyLinkedListNode<K, V> | null {
+  // 查找节点
+  find(value: T): DoublyLinkedListNode<T> | null {
     let currentNode = this.head;
 
     while (currentNode) {
@@ -103,5 +33,42 @@ export class DoublyLinkedList<K, V> {
     }
 
     return null;
+  }
+
+  // 插入节点到链表头部
+  addToHead(node: DoublyLinkedListNode<T>) {
+    if (!this.head) {
+      this.head = this.tail = node;
+    } else {
+      node.next = this.head;
+      this.head.prev = node;
+      this.head = node;
+    }
+  }
+
+  // 从链表中移除节点
+  remove(node: DoublyLinkedListNode<T>) {
+    if (node.prev !== null) {
+      node.prev.next = node.next;
+    } else {
+      this.head = node.next;
+    }
+
+    if (node.next !== null) {
+      node.next.prev = node.prev;
+    } else {
+      this.tail = node.prev;
+    }
+  }
+
+  // 获取链表长度
+  size(): number {
+    let count = 0;
+    let currentNode = this.head;
+    while (currentNode) {
+      count++;
+      currentNode = currentNode.next;
+    }
+    return count;
   }
 }

@@ -1,12 +1,11 @@
-import { DoublyLinkedList } from "./src/DoublyLinkedList";
+import { LRUCache } from "./src/LRUCache";
 
-const list = new DoublyLinkedList<number, number>();
+const sequence: number[] = [
+  0, 3, 5, 2, 4, 9, 10, 15, 8, 7, 6, 6, 6, 5, 1, 2, 2, 4, 4, 6, 7, 8, 9, 11, 13,
+  11, 14, 12, 1, 15, 7, 8, 12, 11, 9,
+];
 
-list.insertAtTail(1, 1);
-list.insertAtTail(2, 2);
-list.insertAtTail(3, 2);
-list.insertAtTail(4, 2);
-list.insertAtTail(5, 3);
-
-list.deleteNode(list.findToKey(3)!);
-console.log(list);
+const cache = new LRUCache(5);
+const { misses, pageFaultRate } = cache.run(sequence);
+console.log("页面未命中的次数:", misses);
+console.log("缺页率:", pageFaultRate);

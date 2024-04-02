@@ -1,101 +1,64 @@
 // 导入必要的数据结构库，例如这里假设我们有一个实现了双向链表的库
 import { DoublyLinkedList, DoublyLinkedListNode } from "./DoublyLinkedList";
 
-class LRUCache<K, V> {
-  private capacity: number;
-  private cache: Map<K, DoublyLinkedListNode<K, V>>;
-  private lruList: DoublyLinkedList<K, V>;
+export class LRUCache {
+  private capacity: number; // 缓存容量
+  private map: Map<number, DoublyLinkedListNode<number>>; // 存储键值对的哈希表
+  private list: DoublyLinkedList<number>; // 双向链表实现LRU队列
+  public hits: number; //命中数
 
   constructor(capacity: number) {
     this.capacity = capacity;
-    this.cache = new Map();
-    this.lruList = new DoublyLinkedList<K, V>();
+    this.map = new Map();
+    this.list = new DoublyLinkedList();
+    this.hits = 0;
   }
 
-  private touch(node: DoublyLinkedListNode<K, V>) {
-    // 将访问过的节点移动到链表头部
-    this.lruList.moveToHead(node);
-  }
-
-  public get(key: K): V | undefined {
-    const node = this.cache.get(key);
-    if (node) {
-      this.touch(node);
-      return node.value;
-    }
-    return undefined;
-  }
-
-  public set(key: K, value: V): void {
-    let node = this.cache.get(key);
-
-    if (node) {
-      node.value = value;
-      this.touch(node);
+  // 页面访问方法，模拟访问某虚页
+  public access(pageNumber: number): void {
+    if (this.map.has(pageNumber)) {
+      // 如果页面已经在缓存中,说明命中了
+      const node = this.map.get(pageNumber)!; // 获取对应节点
+      this.list.remove(node); // 从链表中移除
+      this.list.addToHead(node); // 将节点移到链表头部
+      this.hits++; //命中数+1
     } else {
-      if (this.cache.size === this.capacity) {
-        // 删除链表尾部（最近最少使用的）节点
-        const leastUsedNode = this.lruList.removeTail();
-        if (leastUsedNode) {
-          this.cache.delete(leastUsedNode.key);
-        }
+      // 如果页面不在缓存中
+      if (this.list.size() >= this.capacity) {
+        // 如果缓存已满
+        const leastRecentlyUsedNode = this.list.tail!; // 获取最近最少使用的节点
+        this.list.remove(leastRecentlyUsedNode); // 从链表中移除
+        this.map.delete(leastRecentlyUsedNode.value); // 从哈希表中移除
       }
 
-      // 创建新节点并添加到链表头部和缓存中
-      node = new DoublyLinkedListNode(key, value);
-      this.lruList.addToHead(node);
-      this.cache.set(key, node);
+      const newNode = new DoublyLinkedListNode(pageNumber); // 创建新的节点
+      this.map.set(pageNumber, newNode); // 添加到哈希表
+      this.list.addToHead(newNode); // 添加到链表头部
     }
   }
 
-  // 输入给定的虚页访问序列，模拟LRU页面调度
-  public simulatePageAccess(pages: K[]): void {
-    pages.forEach((page) => {
-      const value = this.get(page);
-      if (value === undefined) {
-        console.log(`访问页面 ${page} 产生缺页，调入内存`);
-        this.set(page, page); // 假设值就是页面编号本身
-        // 显示内存页帧状态的变化
-        this.displayMemoryStatus();
-      } else {
-        console.log(`访问页面 ${page} 已在内存中`);
-        this.touch(this.cache.get(page)!);
-        // 显示内存页帧状态的变化
-        this.displayMemoryStatus();
-      }
+  // 根据给定的虚页访问序列运行
+  public simulatePageAccess(sequence: number[]): void {
+    sequence.forEach((pageNumber) => {
+      this.access(pageNumber);
+      //console.log(this.list); // 输出每次访问后的内存页帧状态
     });
   }
 
-  // 仅用于演示目的，实现显示内存页帧状态的方法
-  private displayMemoryStatus(): void {
-    // 在此处打印或更新内存页帧的实际状态
-    // 这里仅做示意，具体内容根据你的实现自行填充
-    console.log("内存页帧状态更新...");
+  // 计算并返回页面未命中的次数和缺页率
+  public getMissCountAndRate(sequence: number[]): {
+    misses: number;
+    pageFaultRate: string;
+  } {
+    const totalAccesses = sequence.length;
+    const misses = totalAccesses - this.hits; //计算页面未命中次数
+    const pageFaultRate = ((misses / totalAccesses) * 100).toFixed(2) + "%"; //计算缺页率
+    return { misses, pageFaultRate };
   }
 
-  // 计算并输出页面未命中次数和缺页率
-  public calculateMissRate(pages: K[]): void {
-    let misses = 0;
-    pages.forEach((page) => {
-      if (!this.cache.has(page)) {
-        misses++;
-      }
-    });
-
-    const hitRate = (pages.length - misses) / pages.length;
-    const missRate = 1 - hitRate;
-
-    console.log(`页面未命中次数: ${misses}`);
-    console.log(`缺页率: ${missRate * 100}%`);
+  // 根据提供的虚页访问序列运行并输出结果
+  public run(sequence: number[]) {
+    this.simulatePageAccess(sequence);
+    return this.getMissCountAndRate(sequence);
   }
 }
-
-// 示例用法
-const pageSequence: number[] = [
-  0, 3, 5, 2, 4, 9, 10, 15, 8, 7, 6, 6, 6, 5, 1, 2, 2, 4, 4, 6, 7, 8, 9, 11, 13,
-  11, 14, 12, 1, 15, 7, 8, 12, 11, 9,
-];
-
-const lruCache = new LRUCache<number, number>(5);
-lruCache.simulatePageAccess(pageSequence);
-lruCache.calculateMissRate(pageSequence);
